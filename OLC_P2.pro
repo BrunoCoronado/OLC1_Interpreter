@@ -27,11 +27,19 @@ CONFIG += c++11
 SOURCES += \
         main.cpp \
         mainwindow.cpp \
-    archivo.cpp
+    archivo.cpp \
+    scanner.cpp \
+    parser.cpp \
+    nodo.cpp \
+    ast.cpp
 
 HEADERS += \
         mainwindow.h \
-    archivo.h
+    archivo.h \
+    scanner.h \
+    parser.h \
+    nodo.h \
+    ast.h
 
 FORMS += \
         mainwindow.ui
@@ -40,3 +48,7 @@ FORMS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+DISTFILES += \
+    scanner.l\
+    parser.y

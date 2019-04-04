@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+#include "nodo.h"
+
 namespace Ui {
 class MainWindow;
 }
@@ -23,6 +25,10 @@ private slots:
     void on_actionGuardar_triggered();
 
     void on_actionGuardar_Como_triggered();
+
+    void on_actionCompilar_triggered();
+
+    void on_actionAST_triggered();
 
 private:
     Ui::MainWindow *ui;
