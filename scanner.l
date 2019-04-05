@@ -16,21 +16,23 @@ COMETARIO_MULTILINEA <-(.*?)->
 FIN_DE_LINEA \r|\n|\r\n
 ESPACIO_EN_BLANCO {FIN_DE_LINEA}|[ \t\f]
 DIGITO [0-9]
-TEXTO_ENTRE_COMILLAS \"(.*?)\"
-CARACTER '(.*?)'
+TEXTO_ENTRE_COMILLAS \"([^\"]*?)\"
+CARACTER '(.?)'
 IDENTIFICADOR [a-z][a-z|0-9|"_"]*
 
 %%
 
 "int"                               { return(INT); /*printf("int %s\n",yytext);*/ }     
-"double"                            { return(DOUBLE); /*printf("double %s\n",yytext);*/ }
+"double"                            { /*printf("double %s\n",yytext);*/ return(DOUBLE);}
 "bool"                              { return(BOOL); /*printf("bool %s\n",yytext);*/ }
 "char"                              { return(CHAR); /*printf("char %s\n",yytext);*/ }      
 "string"                            { return(STRING); /*printf("string %s\n",yytext);*/ }
 "arreglo"                           { return(ARREGLO); /*printf("string %s\n",yytext);*/ }    
 
-"verdadero" | "true"                { return(TRUE); /*printf("true %s\n",yytext);*/} 
-"falso" | "false"                   { return(FALSE); /*printf("false %s\n",yytext);*/}        
+"verdadero"                         { return(TRUE); /*printf("true %s\n",yytext);*/} 
+"true"                              { return(TRUE); /*printf("true %s\n",yytext);*/} 
+"falso"                             { /*printf("false %s\n",yytext);*/ return(FALSE);}        
+"false"                             { /*printf("false %s\n",yytext);*/ return(FALSE);}        
                     
 "imprimir"                          { return(IMPRIMIR); /*printf(" %s\n", yytext);*/}                                        
 "show"                              { return(SHOW); /*printf(" %s\n", yytext);*/}        
@@ -56,7 +58,7 @@ IDENTIFICADOR [a-z][a-z|0-9|"_"]*
 "^"                                 { return(POTENCIA); /*printf("^ %s\n",yytext);*/}   
 ","                                 { return(COMA); /*printf(", %s\n",yytext);*/}   
 "="                                 { return(IGUAL); /*printf("= %s\n",yytext);*/}   
-";"                                 { printf(" %s\n",yytext); return(PUNTO_Y_COMA); } 
+";"                                 { /*printf(" %s\n",yytext);*/ return(PUNTO_Y_COMA); } 
 "++"                                { return(MAS_MAS); /*printf("++ %s\n",yytext);*/} 
 "--"                                { return(MENOS_MENOS); /*printf("-- %s\n",yytext);*/} 
 "["                                 { return(CORCHETE_ABRE); /*printf("[ %s\n",yytext);*/} 
@@ -64,20 +66,20 @@ IDENTIFICADOR [a-z][a-z|0-9|"_"]*
 "}"                                 { return(LLAVE_CIERRA); /*printf("} %s\n",yytext);*/} 
 "{"                                 { return(LLAVE_ABRE); /*printf(" %s\n",yytext);*/}
 "("                                 { return(PARENTESIS_ABRE); /*printf(" %s\n",yytext);*/}
-")"                                 { printf(" %s\n",yytext); return(PARENTESIS_CIERRA);}
+")"                                 { /*printf(" %s\n",yytext);*/ return(PARENTESIS_CIERRA);}
   
 {IDENTIFICADOR}                     { yylval.cont = strdup(yytext); return(IDENTIFICADOR); /*printf("IDENTIFICADOR %s\n",yytext);*/}   
 {DIGITO}+                           { yylval.cont = strdup(yytext); return(ENTERO); /*printf("numero %s\n",yytext);*/}    
-{DIGITO}+"."{DIGITO}*               { return(DECIMAL); /*printf("decimal %s\n",yytext);*/}
-{TEXTO_ENTRE_COMILLAS}              { return(CADENA); /*printf("texto entre comillas %s\n",yytext);*/}
-{CARACTER}                          { return(CARACTER); /*printf("caracter %s\n",yytext);*/}
+{DIGITO}+"."{DIGITO}*               { yylval.cont = strdup(yytext); return(DECIMAL); /*printf("decimal %s\n",yytext);*/}
+{TEXTO_ENTRE_COMILLAS}              { yylval.cont = strdup(yytext); return(CADENA); /*printf("texto entre comillas %s\n",yytext);*/}
+{CARACTER}                          { yylval.cont = strdup(yytext); return(CARACTER); /*printf("caracter %s\n",yytext);*/}
 
 {COMENTARIO_UNA_LINEA}              {}
 {COMETARIO_MULTILINEA}              {}
 {FIN_DE_LINEA}                      {}
 {ESPACIO_EN_BLANCO}                 {}
 
-.                                  {printf("NO RECONOCIDO\n");}
+.                                  { printf("Error lexico no se reconocio lexema\n"); return(ERROR);}
 
 
 %%

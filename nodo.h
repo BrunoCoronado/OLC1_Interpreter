@@ -10,7 +10,7 @@ class nodo
 
 public:
     nodo();
-    nodo(QString tipo, QString valor, int idTipo, int fila, int columna, int numero);
+    nodo(QString tipo, QString valor, int idTipo);
 
     void agregar(nodo nuevoNodo);
     int tipoNodo();
@@ -18,9 +18,6 @@ public:
     QString tipo;
     QString valor;
     int idTipo;
-    int numero;
-    int fila;
-    int columna;
     QList<nodo> hijos;
 
 };

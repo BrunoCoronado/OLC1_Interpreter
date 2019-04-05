@@ -64,6 +64,7 @@ void MainWindow::on_actionGuardar_Como_triggered()
 nodo *raizAST;
 void MainWindow::on_actionCompilar_triggered()
 {
+    raizAST = new nodo("raiz", "raiz", 0);
     archivo archivo;
     if(this->windowTitle().toStdString().compare( "OLC") != 0){
         archivo.guardar(this->windowTitle().toStdString(),ui->txtEditor->toPlainText().toStdString() + "$");

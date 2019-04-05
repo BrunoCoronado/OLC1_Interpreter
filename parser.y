@@ -17,14 +17,14 @@
 
     extern nodo *raizAST;
 
-    int contadorTokens = 0;
-
     int yyerror(const char* mens)
     {
-        std::cout << mens <<" no se reconocio " <<" "<<yytext<< std::endl;
+        std::cout << mens <<" no se reconocio " <<" "<<yytext << " en linea "  << yylineno << std::endl;
         return 0;
     }
 %}
+
+%locations
 
 %union{
     class nodo *nodoAST;
@@ -76,10 +76,12 @@
 %token<cont> DECIMAL
 %token<cont> CADENA
 %token<cont> CARACTER
+%token<cont> ERROR
 
 %type<nodoAST> A;
 %type<nodoAST> B;
 %type<nodoAST> C;
+%type<nodoAST> C0;
 %type<nodoAST> D;
 %type<nodoAST> D0;
 %type<nodoAST> E; 
@@ -97,6 +99,8 @@
 %type<nodoAST> L0;
 %type<nodoAST> L1;
 %type<nodoAST> M;
+%type<nodoAST> M0;
+%type<nodoAST> M1;
 %type<nodoAST> N;
 
 %left COMA SINO
@@ -115,25 +119,34 @@
 
 A:  B ACEPTACION
         {
-            nodo *inicio = new nodo("raiz", "raiz", 0, 0, 0, contadorTokens++);
-            nodo *n = new nodo("aceptacion", "$", 0, @2.first_line, @2.first_column, contadorTokens++);
-            inicio->agregar(*$1);
-            inicio->agregar(*n);
-            raizAST = inicio;
+            nodo *n = new nodo("aceptacion", "$", 0);
+            raizAST->agregar(*n);
         }   
     |ACEPTACION
         {
-            nodo *inicio = new nodo("raiz", "raiz", 0, 0, 0, contadorTokens++);
-            nodo *n = new nodo("aceptacion", "$", 0, @1.first_line, @1.first_column, contadorTokens++);
-            inicio->agregar(*n);
-            raizAST = inicio;
+            nodo *n = new nodo("aceptacion", "$", 0);
+            raizAST->agregar(*n);
         }
 ;
 
 B:  B C
         {
-            $1->agregar(*$2);
+            raizAST->agregar(*$2);
             $$ = $1;
+        }
+    |C
+        {
+            raizAST->agregar(*$1);
+            $$ = $1;
+        }
+;
+
+C0: C0 C
+        {
+            nodo *n = new nodo("C0", "C0", 0);
+            n->agregar(*$1);
+            n->agregar(*$2);
+            $$ = n;
         }
     |C
         {
@@ -170,10 +183,9 @@ C:  D
 D:  D0 E IGUAL F PUNTO_Y_COMA
         {
             $1->agregar(*$2);
-            nodo *n = new nodo("igual", "=", 11, @3.first_line, @3.first_column, contadorTokens++);
+            nodo *n = new nodo("igual", "=", 11);
             n->agregar(*$4);
             $1->agregar(*n);
-            //$1->agregar(*$4);
             $$ = $1;
         }
     |D0 E PUNTO_Y_COMA
@@ -183,14 +195,16 @@ D:  D0 E IGUAL F PUNTO_Y_COMA
         }
     |D0 ARREGLO E G IGUAL H PUNTO_Y_COMA
         {
-            $4->agregar(*$3);
-            $4->agregar(*$6);
+            $1->agregar(*$3);
             $1->agregar(*$4);
+            nodo *n = new nodo("igual", "=", 11);
+            n->agregar(*$6);
+            $1->agregar(*n);
             $$ = $1;
         }
     |D0 ARREGLO E G PUNTO_Y_COMA
         {
-            $4->agregar(*$3);
+            $1->agregar(*$3);
             $1->agregar(*$4);
             $$ = $1;
         }
@@ -198,139 +212,139 @@ D:  D0 E IGUAL F PUNTO_Y_COMA
 
 D0: INT
         {
-            $$ = new nodo("tipo de dato", "int", 50, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("tipo de dato", "int", 50);
         }
     |DOUBLE
         {
-            $$ = new nodo("tipo de dato", "double", 51, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("tipo de dato", "double", 51);
         }
     |BOOL
         {
-            $$ = new nodo("tipo de dato", "bool", 52, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("tipo de dato", "bool", 52);
         }
     |CHAR 
         {
-            $$ = new nodo("tipo de dato", "char", 53, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("tipo de dato", "char", 53);
         }
     |STRING 
         {
-            $$ = new nodo("tipo de dato", "string", 54, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("tipo de dato", "string", 54);
         }
 ;
 
 E:  E COMA E
         {
-            nodo *padre = new nodo("coma", ",", 10, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("coma", ",", 10); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |IDENTIFICADOR
         {
-            $$ = new nodo("identificador", $1, 1, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("identificador", $1, 1);
             free($1);
         }
 ;
 
 F:  F MAS F
         {
-            nodo *padre = new nodo("mas", "+", 25, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("aritmetico", "+", 25); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F MENOS F
         {
-            nodo *padre = new nodo("menos", "-", 21, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("aritmetico", "-", 21); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F MULTIPLICACION F
         {
-            nodo *padre = new nodo("multiplicacion", "*", 24, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("aritmetico", "*", 24); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F DIVISION F
         {
-            nodo *padre = new nodo("division", "/", 23, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("aritmetico", "/", 23); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F POTENCIA F
         {
-            nodo *padre = new nodo("potencia", "^", 22, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("aritmetico", "^", 22); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |MENOS F
         {
-            nodo *padre = new nodo("menos", "-", 21, @1.first_line, @1.first_column, contadorTokens++); 
+            nodo *padre = new nodo("aritmetico", "-", 21); 
             padre->agregar(*$2);
             $$ = padre;
         }
     |F AND F
         {
-            nodo *padre = new nodo("and", "&&", 20, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("logico", "&&", 20); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F OR F
         {
-            nodo *padre = new nodo("or", "||", 19, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("logico", "||", 19); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |NOT F
         {
-            nodo *padre = new nodo("not", ">=", 18, @1.first_line, @1.first_column, contadorTokens++); 
+            nodo *padre = new nodo("logico", "!", 18); 
             padre->agregar(*$2);
             $$ = padre;
         }
     |F IGUAL_IGUAL F
         {
-            nodo *padre = new nodo("igual igual", "==", 17, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("relacional", "==", 17); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F NO_IGUAL F
         {
-            nodo *padre = new nodo("no igual", "!=", 16, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("relacional", "!=", 16); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F MENOR_QUE F
         {
-            nodo *padre = new nodo("menor que", ">=", 15, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("relacional", "<", 15); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F MAYOR_QUE F
         {
-            nodo *padre = new nodo("mayor que", ">", 14, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("relacional", ">", 14); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F MENOR_IGUAL F
         {
-            nodo *padre = new nodo("menor igual", "<=", 13, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("relacional", "<=", 13); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |F MAYOR_IGUAL F
         {
-            nodo *padre = new nodo("mayor igual", ">=", 12, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("relacional", ">=", 12); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
@@ -341,49 +355,53 @@ F:  F MAS F
         }
     |ENTERO
         {
-            $$ = new nodo("entero", $1, 60, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("entero", $1, 60);
             free($1);
         }
     |DECIMAL
         {
-            $$ = new nodo("decimal", $1, 59, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("decimal", $1, 59);
+            free($1);
         }
     |CARACTER
         {
-            $$ = new nodo("caracter", $1, 58, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("caracter", $1, 58);
+            free($1);
         }
     |CADENA
         {
-            $$ = new nodo("cadena", $1, 57, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("cadena", $1, 57);
+            free($1);
         }
     |TRUE
         {
-            $$ = new nodo("true", "true", 56, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("true", "true", 56);
         }
     |FALSE
         {
-            $$ = new nodo("false", "false", 55, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("false", "false", 55);
         }
     |IDENTIFICADOR
         {
-            $$ = new nodo("identificador", $1, 1, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("identificador", $1, 1);
+            free($1);
         }
     |IDENTIFICADOR CORCHETE_ABRE F CORCHETE_CIERRA
         {
-            nodo *padre = new nodo("identificador", $1, 1, @1.first_line, @1.first_column, contadorTokens++);
+            nodo *padre = new nodo("identificador", $1, 1);
             padre->agregar(*$3);
             $$ = padre;
         }
     |IDENTIFICADOR CORCHETE_ABRE F CORCHETE_CIERRA CORCHETE_ABRE F CORCHETE_CIERRA
         {
-            nodo *padre = new nodo("identificador", $1, 1, @1.first_line, @1.first_column, contadorTokens++);
+            nodo *padre = new nodo("identificador", $1, 1);
             padre->agregar(*$3);
             padre->agregar(*$6);
             $$ = padre;
         }
     |IDENTIFICADOR CORCHETE_ABRE F CORCHETE_CIERRA CORCHETE_ABRE F CORCHETE_CIERRA CORCHETE_ABRE F CORCHETE_CIERRA
         {
-            nodo *padre = new nodo("identificador", $1, 1, @1.first_line, @1.first_column, contadorTokens++);
+            nodo *padre = new nodo("identificador", $1, 1);
             padre->agregar(*$3);
             padre->agregar(*$6);
             padre->agregar(*$9);
@@ -393,20 +411,20 @@ F:  F MAS F
 
 G:  CORCHETE_ABRE F CORCHETE_CIERRA 
         {
-            nodo *padre = new nodo("arreglo", "arreglo", 2, @1.first_line, @1.first_column, contadorTokens++); 
+            nodo *padre = new nodo("arreglo", "arreglo", 2); 
             padre->agregar(*$2);
             $$ = padre;   
         }
     |CORCHETE_ABRE F CORCHETE_CIERRA CORCHETE_ABRE F CORCHETE_CIERRA 
         {
-            nodo *padre = new nodo("arreglo", "arreglo", 2, @1.first_line, @1.first_column, contadorTokens++); 
+            nodo *padre = new nodo("arreglo", "arreglo", 2); 
             padre->agregar(*$2);
             padre->agregar(*$5);
             $$ = padre;   
         }
     |CORCHETE_ABRE F CORCHETE_CIERRA CORCHETE_ABRE F CORCHETE_CIERRA CORCHETE_ABRE F CORCHETE_CIERRA 
         {
-            nodo *padre = new nodo("arreglo", "arreglo", 2, @1.first_line, @1.first_column, contadorTokens++); 
+            nodo *padre = new nodo("arreglo", "arreglo", 2); 
             padre->agregar(*$2);
             padre->agregar(*$5);
             padre->agregar(*$8);
@@ -426,7 +444,7 @@ H:  LLAVE_ABRE H1 LLAVE_CIERRA
 
 H1: H1 COMA H1
         {
-            nodo *padre = new nodo("coma", ",", 10, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("coma", ",", 10); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
@@ -443,7 +461,7 @@ H1: H1 COMA H1
 
 H2: H2 COMA H2
         {
-            nodo *padre = new nodo("coma", ",", 10, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("coma", ",", 10); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
@@ -456,7 +474,7 @@ H2: H2 COMA H2
 
 I:  I COMA I
         {
-            nodo *padre = new nodo("coma", ",", 10, @2.first_line, @2.first_column, contadorTokens++); 
+            nodo *padre = new nodo("coma", ",", 10); 
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
@@ -469,10 +487,10 @@ I:  I COMA I
 
 J:  IDENTIFICADOR IGUAL F PUNTO_Y_COMA
         {
-            nodo *padre = new nodo("identificador", $1, 1, @1.first_line, @1.first_column, contadorTokens++);
-            nodo *n = new nodo("igual", "=", 11, @2.first_line, @2.first_column, contadorTokens++);
+            nodo *padre = new nodo("identificador", $1, 1);
+            nodo *n = new nodo("igual", "=", 11);
+            n->agregar(*$3);
             padre->agregar(*n);
-            padre->agregar(*$3);
             $$ = padre;
         }
     |J1 J0 PUNTO_Y_COMA
@@ -484,41 +502,41 @@ J:  IDENTIFICADOR IGUAL F PUNTO_Y_COMA
 
 J0: MAS_MAS
         {
-           $$ = new nodo("mas mas", "++", 26, @1.first_line, @1.first_column, contadorTokens++);
+           $$ = new nodo("mas mas", "++", 26);
         }
     |MENOS_MENOS
         {
-           $$ = new nodo("menos menos", "--", 27, @1.first_line, @1.first_column, contadorTokens++);
+           $$ = new nodo("menos menos", "--", 27);
         }
 ;
 
 J1: IDENTIFICADOR
         {
-            $$ = new nodo("identificador", $1, 1, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("identificador", $1, 1);
         }
     |DECIMAL
         {
-            $$ = new nodo("decimal", $1, 59, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("decimal", $1, 59);
         }
     |ENTERO
         {
-            $$ = new nodo("entero", $1, 60, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("entero", $1, 60);
         }
     |CARACTER
         {
-            $$ = new nodo("caracter", $1, 58, @1.first_line, @1.first_column, contadorTokens++);
+            $$ = new nodo("caracter", $1, 58);
         }
 ;
 
 K:  IMPRIMIR PARENTESIS_ABRE F PARENTESIS_CIERRA PUNTO_Y_COMA
         {
-            nodo *padre = new nodo("imprimir", "imprimir", 70, @1.first_line, @1.first_column, contadorTokens++);
+            nodo *padre = new nodo("imprimir", "imprimir", 70);
             padre->agregar(*$3);
             $$ = padre;
         }
     |SHOW PARENTESIS_ABRE F COMA F PARENTESIS_CIERRA PUNTO_Y_COMA
         {
-            nodo *padre = new nodo("show", "show", 71, @1.first_line, @1.first_column, contadorTokens++);
+            nodo *padre = new nodo("show", "show", 71);
             padre->agregar(*$3);
             padre->agregar(*$5);
             $$ = padre;
@@ -529,35 +547,35 @@ L:  L0
         {
             $$ = $1;
         }
+    |L0 SINO LLAVE_ABRE C0 LLAVE_CIERRA   
+        {
+            nodo *n = new nodo("sino", "sino", 73);
+            n->agregar(*$4);
+            $1->agregar(*n);
+            $$ = $1;   
+        }
     |L0 SINO L1 
         {
-            nodo *n = new nodo("sino", "sino", 73, @2.first_line, @2.first_column, contadorTokens++);
-            $1->agregar(*n);
+            //nodo *n = new nodo("sino", "sino", 73);
+            //$1->agregar(*n);
             $1->agregar(*$3);
             $$ = $1;
         }
-    |L0 SINO LLAVE_ABRE C LLAVE_CIERRA   
-        {
-            nodo *n = new nodo("sino", "sino", 73, @2.first_line, @2.first_column, contadorTokens++);
-            $1->agregar(*n);
-            $1->agregar(*$4);
-            $$ = $1;   
-        }
-    |L0 SINO L1 SINO LLAVE_ABRE C LLAVE_CIERRA  
+    |L0 SINO L1 SINO LLAVE_ABRE C0 LLAVE_CIERRA  
         {   
-            nodo *n1 = new nodo("sino", "sino", 73, @2.first_line, @2.first_column, contadorTokens++);
-            $1->agregar(*n1);
+            //nodo *n1 = new nodo("sino", "sino", 73);
+            //$1->agregar(*n1);
             $1->agregar(*$3);
-            nodo *n2 = new nodo("sino", "sino", 73, @2.first_line, @2.first_column, contadorTokens++);
+            nodo *n2 = new nodo("sino", "sino", 73);
+            n2->agregar(*$6);
             $1->agregar(*n2);
-            $1->agregar(*$6);
             $$ = $1;
         }
 ;
 
-L0: SI PARENTESIS_ABRE F PARENTESIS_CIERRA LLAVE_ABRE C LLAVE_CIERRA
+L0: SI PARENTESIS_ABRE F PARENTESIS_CIERRA LLAVE_ABRE C0 LLAVE_CIERRA
         {
-            nodo *padre = new nodo("si", "si", 72, @1.first_line, @1.first_column, contadorTokens++);
+            nodo *padre = new nodo("si", "si", 72);
             padre->agregar(*$3);
             padre->agregar(*$6);
             $$ = padre;
@@ -566,7 +584,7 @@ L0: SI PARENTESIS_ABRE F PARENTESIS_CIERRA LLAVE_ABRE C LLAVE_CIERRA
 
 L1: L1 SINO L1
         {
-            nodo *padre = new nodo("sino", "sino", 73, @2.first_line, @2.first_column, contadorTokens++);
+            nodo *padre = new nodo("sino", "sino", 73);
             padre->agregar(*$1);
             padre->agregar(*$3);
             $$ = padre;
@@ -577,20 +595,41 @@ L1: L1 SINO L1
         }
 ;
 
-M:  PARA PARENTESIS_ABRE F PUNTO_Y_COMA F PUNTO_Y_COMA F PARENTESIS_CIERRA LLAVE_ABRE C LLAVE_CIERRA 
+M:  PARA PARENTESIS_ABRE M0 F PUNTO_Y_COMA M1 PARENTESIS_CIERRA LLAVE_ABRE C0 LLAVE_CIERRA 
     {
-        nodo *padre = new nodo("para", "para", 74, @1.first_line, @1.first_column, contadorTokens++);
+        nodo *padre = new nodo("para", "para", 74);
         padre->agregar(*$3);
-        padre->agregar(*$5);
-        padre->agregar(*$7);
-        padre->agregar(*$10);
+        padre->agregar(*$4);
+        padre->agregar(*$9);
+        padre->agregar(*$6);
         $$ = padre;
     }
 ;
 
-N: REPETIR PARENTESIS_ABRE F PARENTESIS_CIERRA LLAVE_ABRE C LLAVE_CIERRA
+M0: D
+        {
+            $$ = $1;
+        }
+    |IDENTIFICADOR IGUAL F PUNTO_Y_COMA
+        {
+            nodo *padre = new nodo("identificador", $1, 1);
+            nodo *n = new nodo("igual", "=", 11);
+            n->agregar(*$3);
+            padre->agregar(*n);
+            $$ = padre;
+        }
+;
+
+M1: J1 MAS_MAS 
+        {
+            $$ = new nodo("mas mas", "++", 26);
+            $$->agregar(*$1);
+        }
+;
+
+N: REPETIR PARENTESIS_ABRE F PARENTESIS_CIERRA LLAVE_ABRE C0 LLAVE_CIERRA
     {
-        nodo *padre = new nodo("repetir", "repetir", 75, @1.first_line, @1.first_column, contadorTokens++);
+        nodo *padre = new nodo("repetir", "repetir", 75);
         padre->agregar(*$3);
         padre->agregar(*$6);
         $$ = padre;

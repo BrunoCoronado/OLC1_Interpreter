@@ -89,7 +89,8 @@ extern int yydebug;
     ENTERO = 299,
     DECIMAL = 300,
     CADENA = 301,
-    CARACTER = 302
+    CARACTER = 302,
+    ERROR = 303
   };
 #endif
 /* Tokens.  */
@@ -138,6 +139,7 @@ extern int yydebug;
 #define DECIMAL 300
 #define CADENA 301
 #define CARACTER 302
+#define ERROR 303
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
@@ -149,7 +151,7 @@ union YYSTYPE
     class nodo *nodoAST;
     char *cont;
 
-#line 153 "parser.h" /* yacc.c:1909  */
+#line 155 "parser.h" /* yacc.c:1909  */
 };
 
 typedef union YYSTYPE YYSTYPE;
