@@ -3,11 +3,14 @@
     #include "scanner.h"
     #include <cstdio>
     #include <iostream>
+    #include <sstream>
     #include <QString>
+    #include <QList>
 
     using namespace std;
 
     #include "nodo.h"; 
+    #include "error.h"
 
     
     extern int yylex();
@@ -16,10 +19,17 @@
     extern char *yytext;
 
     extern nodo *raizAST;
+    extern bool errorCompilacion;
+    extern QList<error> errores;
 
     int yyerror(const char* mens)
     {
-        std::cout << mens <<" no se reconocio " <<" "<<yytext << " en linea "  << yylineno << std::endl;
+        stringstream ss;
+        ss << mens <<" no se reconocio " <<" "<<yytext;
+        std::string s = ss.str();
+        error e(ss.str(),yylineno);
+        errores.append(e);
+        errorCompilacion = true;
         return 0;
     }
 %}

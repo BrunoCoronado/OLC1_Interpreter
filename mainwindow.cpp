@@ -2,12 +2,18 @@
 #include "ui_mainwindow.h"
 #include <QMessageBox>
 #include <QFileDialog>
+#include <QList>
 
 #include "archivo.h"
 #include "scanner.h"
 #include "parser.h"
 #include "nodo.h"
 #include "ast.h"
+#include "error.h"
+
+nodo *raizAST;
+bool errorCompilacion = false;
+QList<error> errores;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -61,10 +67,11 @@ void MainWindow::on_actionGuardar_Como_triggered()
         this->setWindowTitle(path+".fi");
     }
 }
-nodo *raizAST;
+
 void MainWindow::on_actionCompilar_triggered()
 {
     raizAST = new nodo("raiz", "raiz", 0);
+    errores = QList<error>();
     archivo archivo;
     if(this->windowTitle().toStdString().compare( "OLC") != 0){
         archivo.guardar(this->windowTitle().toStdString(),ui->txtEditor->toPlainText().toStdString() + "$");
@@ -80,6 +87,12 @@ void MainWindow::on_actionCompilar_triggered()
         yyin = fopen(path, "rt");
         yyparse();
     }
+    if(!errorCompilacion){
+        //procedemos a recorrer el arbol
+    }else{
+        QMessageBox::warning(this, "Error", "Se encontraron errores en la entrada.");
+        cout <<  "fdf " << errores[0].descripcion << errores[0].linea << endl;
+    }
 }
 
 void MainWindow::on_actionAST_triggered()
@@ -89,5 +102,35 @@ void MainWindow::on_actionAST_triggered()
         ast.graficar();
     } catch (int e) {
         cout << "ERROR AL GRAFICAR AST" <<endl;
+    }
+}
+
+
+void MainWindow::on_actionErrores_triggered()
+{
+    if(errorCompilacion){
+        try {
+            if(errores.length() != 0){
+                ofstream archivo;
+                archivo.open("errores.html");
+                archivo << "<!DOCTYPE html>\n<html>\n<head>\n<title>Reporte de Errores</title>\n</head>\n<body>\n<h1 align=\"center\">Reporte de Errores</h1>\n<style type=\"text/css\">\n.tg  {border-collapse:collapse;border-spacing:0;margin:0px auto;}\n.tg td{font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}\n.tg th{font-family:Arial, sans-serif;font-size:14px;font-weight:normal;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;}\n.tg .tg-4tse{background-color:#cb0d00;color:#000000;text-align:left;vertical-align:top}\n.tg .tg-0lax{text-align:left;vertical-align:top}\nh1{font-family:Arial, sans-serif}\n</style>\n";
+                archivo << "<table class=\"tg\">\n";
+                archivo << "<tr>\n<th class=\"tg-4tse\">No</th>\n<th class=\"tg-4tse\">Error</th>\n<th class=\"tg-4tse\">Linea</th>\n";
+                for (int i = 0 ; i < errores.length() ; ++i) {
+                    archivo << "<tr>";
+                    archivo << "<td class=\"tg-0Lax\">" << (i+1) << "<br></td>";
+                    archivo << "<td Class=\"tg-0Lax\">" << errores[i].descripcion << "</td>";
+                    archivo << "<td Class=\"tg-0Lax\">" << errores[i].linea << "</td>";
+                    archivo << "</tr>";
+                }
+                archivo << "</body>\n</html>";
+                archivo.close();
+                system("xdg-open errores.html");
+            }
+        } catch (int e) {
+            cout << "ERROR AL GRAFICAR ERRORES" << endl;
+        }
+    }else{
+        QMessageBox::warning(this, "Error", "No se encontraron errores en la entrada.");
     }
 }

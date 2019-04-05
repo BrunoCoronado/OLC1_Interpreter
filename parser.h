@@ -146,7 +146,7 @@ extern int yydebug;
 
 union YYSTYPE
 {
-#line 29 "parser.y" /* yacc.c:1909  */
+#line 39 "parser.y" /* yacc.c:1909  */
 
     class nodo *nodoAST;
     char *cont;

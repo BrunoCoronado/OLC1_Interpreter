@@ -30,6 +30,10 @@ private slots:
 
     void on_actionAST_triggered();
 
+    void on_actionErrores_toggled(bool arg1);
+
+    void on_actionErrores_triggered();
+
 private:
     Ui::MainWindow *ui;
 };

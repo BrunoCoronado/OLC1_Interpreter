@@ -31,7 +31,8 @@ SOURCES += \
     scanner.cpp \
     parser.cpp \
     nodo.cpp \
-    ast.cpp
+    ast.cpp \
+    error.cpp
 
 HEADERS += \
         mainwindow.h \
@@ -39,7 +40,8 @@ HEADERS += \
     scanner.h \
     parser.h \
     nodo.h \
-    ast.h
+    ast.h \
+    error.h
 
 FORMS += \
         mainwindow.ui
